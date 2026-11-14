@@ -1,0 +1,41 @@
+name: Deploy to GitHub Pages on main pushes
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Prebuild version info
+      run: npm run prebuild
+
+    - name: Set Git identity
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Deploy to GitHub Pages
+      run: npm run deploy
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

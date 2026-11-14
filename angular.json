@@ -1,0 +1,110 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "battle-tracker": {
+      "root": "",
+      "sourceRoot": "src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist",
+            "index": "src/index.html",
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "browser": "src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "assets": [
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.scss",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.css"
+            ],
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.min.js"
+            ]
+          },
+          "configurations": {
+            "source": {
+              "fileReplacements": []
+            },
+            "dev": {
+              "optimization": false,
+              "sourceMap": true,
+              "extractLicenses": false,
+              "fileReplacements": []
+            },
+            "production": {
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "fileReplacements": []
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "dev": {
+              "buildTarget": "battle-tracker:build:dev"
+            },
+            "production": {
+              "buildTarget": "battle-tracker:build:production"
+            }
+          },
+          "defaultConfiguration": "dev"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:web-test-runner",
+          "options": {
+            "main": "src/test.ts",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "scripts": [],
+            "styles": [
+              "src/styles.scss"
+            ],
+            "assets": [
+              "src/assets",
+              "src/favicon.ico"
+            ],
+            "tsConfig": "tsconfig.spec.json"
+          }
+        },
+        "deploy": {
+          "builder": "angular-cli-ghpages:deploy"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "schematicCollections": [
+      "angular-eslint"
+    ]
+  }
+}

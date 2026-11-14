@@ -1,0 +1,331 @@
+<div class="container-fluid">
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-2" role="group" aria-label="Encounter saving and backups">
+    <button type="button" class="btn btn-outline-primary" (click)="saveData()">
+      <i class="fa fa-save" aria-hidden="true"></i> {{ "Save" | translate }}
+    </button>
+    <button type="button" class="btn btn-outline-secondary" (click)="exportData()">
+      <i class="fa fa-download" aria-hidden="true"></i> {{ "Export JSON" | translate }}
+    </button>
+    <button type="button" class="btn btn-outline-secondary" (click)="backupInput.click()">
+      <i class="fa fa-upload" aria-hidden="true"></i> {{ "Import JSON" | translate }}
+    </button>
+    <input #backupInput type="file" accept=".json,application/json" hidden (change)="importData($event)" aria-label="Select BattleTracker JSON backup">
+    <span class="small text-muted" role="status" aria-live="polite">{{ storageMessage }}</span>
+  </div>
+  <div class="row">
+    <div class="col-9">
+      <div class="row">
+        <div class="col-6" style="padding-left: 0">
+          <div class="left btn-group" role="group">
+            @if(!combatManager.started)
+            {
+            <button type="button" class="btn btn-primary" (click)="btnStartRound_Click()">
+              {{ "Start Turn" | translate }}
+            </button>
+            }
+            @if(combatManager.started && combatManager.passEnded)
+            {
+            <button type="button" class="btn btn-primary" (click)="btnNextPass_Click()">
+              {{ combatManager.hasMoreIniPasses() ? "Next Pass" : "End Turn" | translate }}
+            </button>
+            }
+            <button type="button" class="btn btn-danger" (click)="btnReset_Click()">
+              {{ "End Combat" | translate }}
+            </button>
+          </div>
+        </div>
+        <div class="col-6 position-relative">
+          <div class="right btn-group" role="group">
+            <button type="button" class="btn btn-warning" (click)="btnUndo_Click()" attr.title="{{'Undo' | translate}}"
+              [disabled]="isUndoDisabled()">
+              <i class="fa fa-undo fa-lg fa-inverse"></i>
+            </button>
+            <button type="button" class="btn btn-warning" (click)="btnRedo_Click()" title="Redo"
+              [disabled]="isRedoDisabled()">
+              <i class="fa fa-redo fa-lg fa-inverse"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  <div class="row">
+    <!--PARTICIPANT TABLE-->
+    <div class="col-9">
+      <div class="row bg-dark text-light">
+        <div class="col-4 col-xl-2">
+          <span class="h5">
+            <b>{{ "Name" | translate }}</b>
+          </span>
+        </div>
+        <div class="col-2 col-xl-1 text-center">
+          <span class="h5">
+            <b>{{ "Ini" | translate }}</b>
+          </span>
+        </div>
+        <div class="col-6 col-xl-2 text-center">
+          <span class="h5">
+            <b>{{ "Base Ini" | translate }} / {{ "Dice Roll" | translate }}</b>
+          </span>
+        </div>
+        <div class="col-xl-7"></div>
+      </div>
+
+      <!--PARTICIPANT ROWS-->
+      <div cdkDropList (cdkDropListDropped)="drop($event)">
+        @for(p of combatManager.participants.items; track $index; let i = $index; let last = $last) {
+        <div class="row participant" attr.id="participant{{i}}" [attr.data-indexnr]="i" [attr.data.participant]="p"
+          (click)="selectActor(p)" [class]="getParticipantStyles(p)" cdkDrag>
+          <div class="col-4 col-xl-2">
+            <input name="name" type="text" autocomplete="off" placeholder="Name" class="form-control"
+              (keydown)="inpName_KeyDown($event)" [(ngModel)]="p.name">
+          </div>
+          <div class="col-2 col-xl text-center">
+            <span class="control-label lblIni">{{ p.getCurrentInitiative() }}</span>
+          </div>
+          <div class="col-6 col-xl-2 text-center">
+            <div class="input-group">
+              <input class="form-control text-center inpBaseIni" name="baseIni" type="number"
+                (focus)="inp_Focus($event)" (keydown)="inpBaseIni_KeyDown($event)" [(ngModel)]="p.baseIni">
+              <input class="form-control inpDiceIni text-center" name="diceIni" type="number"
+                (keydown)="inpDiceIni_KeyDown($event)" (focus)="inp_Focus($event)" (input)="iniChange($event, p)"
+                [(ngModel)]="p.diceIni" #field="ngModel" [min]="0">
+              <div class="input-group-append">
+                <button type="button" class="btn btn-dark p-0" (click)="btnRollInitiative_Click(p)"
+                  [disabled]="p.diceIni !== 0" data-toggle="tooltip" data-placement="bottom" title="Roll Initiative">
+                  <i class="fas fa-dice fa-lg"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+          <div class="col-7 col-xl-4 btn-group" role="group">
+            <!--action-->
+            <!-- todo move to method canSeizeInitiative in participant -->
+            @if (!p.edge
+            && (!combatManager.started || (combatManager.passEnded && p.getCurrentInitiative() > 10)))
+            {
+            <button type="button" class="btn btn-primary" (click)="btnEdge_Click(p)">
+              {{ "Seize Initiative" | translate }}
+            </button>
+            }
+            <!-- todo move to method canAct in participant -->
+            @if(combatManager.started && (p.status === 1 || p.status === 2))
+            {
+            <button type="button" class="btn btn-primary" (click)="btnAct_Click(p)">
+              {{ "Act" | translate }}
+            </button>
+            }
+            @if (combatManager.started && p.status === 1)
+            {
+            <button type="button" class="btn btn-warning" (click)="btnDelay_Click(p)">
+              {{ "Delay" | translate }}
+            </button>
+            }
+            @if (combatManager.started && p.getCurrentInitiative() >= 1) {
+            <div class="btn-group p-0" #interruptDropdown ngbDropdown autoClose="outside">
+              <button ngbDropdownToggle id="interruptDropdownButton" type="button" class="btn btn-secondary"
+                dropdownToggle>
+                {{ "Interrupts" | translate }} <span class="caret"></span>
+              </button>
+              <div ngbDropdownMenu aria-labelledby="interruptDropdownButton">
+                @for(action of actionHandler.commonInterrupts; track action.key)
+                {
+                <div class="dropdown-item" [class.disabled]="!p.canUseAction(action)">
+                  @if (action.persist)
+                  {
+                  <div class="btn-group-toggle" data-toggle="buttons">
+                    <label class=" btn btn-secondary btn-block" [class.disabled]="!p.canUseAction(action)"
+                      (click)="btnAction_Click(p, action)">
+                      <input type="checkbox" attr.title="{{ action.iniMod }}">
+                      {{ action.key | translate }} ({{ action.iniMod }})
+                    </label>
+                  </div>
+                  }
+                  @else
+                  {
+                  <button type="button" class="btn btn-secondary btn-block" (click)="btnAction_Click(p, action)"
+                    [disabled]="!p.canUseAction(action)" attr.title="{{ action.iniMod }}">
+                    {{ action.key | translate }} ({{ action.iniMod }})
+                  </button>
+                  }
+                </div>
+                }
+                <div class="dropdown-item">
+                  <div class="row mx-0 input-group">
+                    <div class="col-6 p-0 input-group-prepend">
+                      <button type="button" class="btn btn-secondary btn-block"
+                        [disabled]="!canUseCustomInterrupt(p, custominterrupt)"
+                        (click)="btnCustomAction_Click(p, custominterrupt)">
+                        {{ "Other" | translate }}
+                      </button>
+                    </div>
+                    <div class="col-6 p-0">
+                      <input #custominterrupt class="form-control inpBaseIni text-center no-border-radius"
+                        name="customInterruptIni" value="-5" type="number" (focus)="inp_Focus($event)">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            }
+            <img src="./assets/shield.svg" [hidden]="!p.isInFullDefense()" alt="Shield Icon"
+              attr.title="{{ 'fullDefense' | translate }}" />
+          </div>
+          <div class="col-5 col-xl-3 text-right">
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-primary" (click)="btnDuplicate_Click(p)">
+                <i class="fas fa-clone fa-lg fa-flip-vertical"></i>
+              </button>
+              @if(p.ooc){
+              <button type="button" class="btn btn-success" (click)="btnEnterCombat_Click(p)">
+                <i class="fa fa-sign-in-alt fa-lg fa-inverse"></i>
+              </button>
+              }
+              @else {
+              <button type="button" class="btn btn-warning" (click)="btnLeaveCombat_Click(p)">
+                <i class="fa fa-sign-out-alt fa-lg fa-inverse"></i>
+              </button>
+              }
+              <button type="button" class="btn btn-danger" (click)="btnDelete_Click(p)">
+                <i class="fa fa-trash fa-lg"></i>
+              </button>
+            </div>
+          </div>
+          @if (last) {
+          <span>{{ ngReady() }}</span>
+          }
+        </div>
+        }
+      </div>
+      <div>
+        <div colspan="8">
+          <button type="submit" class="btn btn-primary" (click)="btnAddParticipant_Click()">
+            <i class="fa fa-plus fa-lg"></i>
+          </button>
+        </div>
+      </div>
+      <div>
+        @if (combatManager.started)
+        {
+        <div colspan="8">{{ "Turn" | translate }}
+          {{ combatManager.combatTurn }},
+          {{ "Pass" | translate }} {{ combatManager.initiativePass }}, {{ "Initiative" | translate }}
+          {{ combatManager.currentInitiative }}
+        </div>
+        }
+        @else
+        {
+        {{ "Turn" | translate }} {{ combatManager.combatTurn }}
+        }
+      </div>
+    </div>
+
+    <!--DETAILS BAR-->
+    @if (selectedActor !== null && selectActor !== undefined)
+    {
+    <div class="col-3 detailsBar">
+      <div class="card">
+        <div class="card-header">
+          <h3>{{ selectedActor.name || ("Selected Actor" | translate) }}</h3>
+        </div>
+        <div class="card-body">
+          <nav ngbNav #nav="ngbNav" class="nav-tabs">
+            <ng-container ngbNavItem>
+              <button ngbNavLink>{{ "Condition Monitor" | translate }}</button>
+              <ng-template ngbNavContent>
+                <h4>{{ "Condition Monitor" | translate }}</h4>
+                <div class="row">
+                  <div class="col-xl-6 cm">
+                    <h4>{{"Physical" | translate}}</h4>
+                    <app-condition-monitor [health]="selectedActor.physicalHealth"
+                      [overflow]="selectedActor.overflowHealth" [painTolerance]="selectedActor.painTolerance"
+                      [hasPainEditor]="selectedActor.hasPainEditor" [(damage)]="selectedActor.physicalDamage">
+                    </app-condition-monitor>
+                  </div>
+                  <div class="col-xl-6 cm">
+                    <h4>{{"Stun" | translate}}</h4>
+                    <app-condition-monitor [health]="selectedActor.stunHealth"
+                      [painTolerance]="selectedActor.painTolerance" [hasPainEditor]="selectedActor.hasPainEditor"
+                      [(damage)]="selectedActor.stunDamage">
+                    </app-condition-monitor>
+                  </div>
+                </div>
+              </ng-template>
+            </ng-container>
+            <ng-container ngbNavItem>
+              <button ngbNavLink>{{ "Stats" | translate }}</button>
+              <ng-template ngbNavContent>
+                <h4>{{ "Stats" | translate }}</h4>
+                <div class="row">
+                  <div class="col-12">
+                    <span>{{ "Initiative Dices" | translate }}</span>
+                  </div>
+                  <div class="col-12">
+                    <ngx-slider [(value)]="selectedActor.dices"
+                      [options]="{ floor: 1, ceil: 5, step: 1, showTicks: true, tickStep: 1, animate: false}">
+                    </ngx-slider>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <span>{{ "Overflow" | translate }}</span>
+                  </div>
+                  <div class="col-12">
+                    <ngx-slider [(value)]="selectedActor.overflowHealth"
+                      [options]="{ floor: 0, ceil: 20, step: 1, showTicks: true, tickStep: 5, animate: false}">
+                    </ngx-slider>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <span>{{ "Physical Health" | translate }}</span>
+                  </div>
+                  <div class="col-12">
+                    <ngx-slider [(value)]="selectedActor.physicalHealth"
+                      [options]="{ floor: 0, ceil: 20, step: 1, showTicks: true, tickStep: 5, animate: false}">
+                    </ngx-slider>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <span>{{ "Stun Health" | translate }}</span>
+                  </div>
+                  <div class="col-12">
+                    <ngx-slider [(value)]="selectedActor.stunHealth"
+                      [options]="{ floor: 0, ceil: 20, step: 1, showTicks: true, tickStep: 5, animate: false}">
+                    </ngx-slider>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <span>{{ "Pain Tolerance" | translate }}</span>
+                  </div>
+                  <div class="col-12">
+                    <ngx-slider [(value)]="selectedActor.painTolerance"
+                      [options]="{ floor: 0, ceil: 15, step: 1, showTicks: true, tickStep: 5, animate: false}">
+                    </ngx-slider>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <span>{{ "Ignore Pain" | translate }}</span>
+                  </div>
+                  <div class="col-12">
+                    <label class="switch">
+                      <input type="checkbox" [(ngModel)]="selectedActor.hasPainEditor" />
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </div>
+              </ng-template>
+            </ng-container>
+          </nav>
+          <div [ngbNavOutlet]="nav" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>
