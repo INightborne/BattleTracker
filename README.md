@@ -1,6 +1,6 @@
 # BattleTracker
 
-A Shadowrun 5th Edition combat and initiative tracker, based on [MerGatto's BattleTracker](https://github.com/MerGatto/BattleTracker) (MIT-licensed in the original package). Original authorship and credit are preserved in the app.
+A Shadowrun 5th Edition combat and initiative tracker. **Originally created by [MerGatto](https://github.com/MerGatto/BattleTracker), updated by [INightborne](https://github.com/INightborne/BattleTracker).** Based on MerGatto's original MIT-licensed project, with original authorship credited in the app.
 
 ## Features
 
