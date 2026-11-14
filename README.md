@@ -18,10 +18,10 @@ Autosave uses browser `localStorage`, not cookies. It stays on the device, requi
 Requires Node.js 22.
 
 ```bash
-npm ci
+npm install
 npm start
 ```
 
-To build: `npm run build`. The main-branch GitHub Actions workflow also supports deploying to GitHub Pages (enable Pages / Actions in repository settings if needed).
+To build: `npm run build`. GitHub Actions builds and publishes the site to the \`gh-pages\` branch. In **Settings → Pages**, select **Deploy from a branch**, choose **gh-pages** and **/(root)**, and save. The site address is https://inightborne.github.io/BattleTracker/ once Pages is enabled.
 
 This copy uses the original SVG logo and vector graphics as favicon/app icons, rather than the original binary PNG/ICO icon files.
