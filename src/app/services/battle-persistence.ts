@@ -136,19 +136,19 @@ export class BattlePersistence {
     } catch {
       throw new Error('The file is not valid JSON.');
     }
-    if (!isObject(data) || data.format !== FORMAT || data.version !== 1) {
+    if (!isObject(data) || data['format'] !== FORMAT || data['version'] !== 1) {
       throw new Error('This is not a supported BattleTracker save file (version 1).');
     }
-    if (!Array.isArray(data.participants) || data.participants.length > 500) {
+    if (!Array.isArray(data['participants']) || data['participants'].length > 500) {
       throw new Error('Invalid participant list.');
     }
-    const combat = data.combat;
+    const combat = data['combat'];
     if (!isObject(combat) ||
-        !isBoolean(combat.started) || !isBoolean(combat.passEnded) ||
-        !isFiniteNumber(combat.combatTurn) || combat.combatTurn < 1 ||
-        !isFiniteNumber(combat.initiativePass) || combat.initiativePass < 1 ||
-        !isFiniteNumber(combat.nextSortOrder) || combat.nextSortOrder < 0 ||
-        !(combat.currentInitiative === null || isFiniteNumber(combat.currentInitiative))) {
+        !isBoolean(combat['started']) || !isBoolean(combat['passEnded']) ||
+        !isFiniteNumber(combat['combatTurn']) || combat['combatTurn'] < 1 ||
+        !isFiniteNumber(combat['initiativePass']) || combat['initiativePass'] < 1 ||
+        !isFiniteNumber(combat['nextSortOrder']) || combat['nextSortOrder'] < 0 ||
+        !(combat['currentInitiative'] === null || isFiniteNumber(combat['currentInitiative']))) {
       throw new Error('Invalid combat state.');
     }
 
@@ -157,20 +157,20 @@ export class BattlePersistence {
       'baseIni', 'diceIni', 'dices', 'painTolerance', 'overflowHealth',
       'physicalHealth', 'stunHealth', 'physicalDamage', 'stunDamage', 'sortOrder'
     ];
-    for (const participant of data.participants) {
-      if (!isObject(participant) || typeof participant.name !== 'string' ||
-          participant.name.length > 500 ||
-          !Number.isInteger(participant.status) ||
-          (participant.status as number) < 0 || (participant.status as number) > 4 ||
+    for (const participant of data['participants']) {
+      if (!isObject(participant) || typeof participant['name'] !== 'string' ||
+          participant['name'].length > 500 ||
+          !Number.isInteger(participant['status']) ||
+          (participant['status'] as number) < 0 || (participant['status'] as number) > 4 ||
           booleanFields.some(field => !isBoolean(participant[field])) ||
           numberFields.some(field => !isFiniteNumber(participant[field])) ||
-          !Array.isArray(participant.actionHistory) ||
-          participant.actionHistory.length > 500) {
+          !Array.isArray(participant['actionHistory']) ||
+          participant['actionHistory'].length > 500) {
         throw new Error('Invalid participant data.');
       }
-      for (const action of participant.actionHistory) {
-        if (!isObject(action) || typeof action.key !== 'string' ||
-            action.key.length > 200 || !isFiniteNumber(action.iniMod) ||
+      for (const action of participant['actionHistory']) {
+        if (!isObject(action) || typeof action['key'] !== 'string' ||
+            action['key'].length > 200 || !isFiniteNumber(action['iniMod']) ||
             ['persist', 'martialArt', 'edge'].some(field =>
               action[field] !== undefined && !isBoolean(action[field]))) {
           throw new Error('Invalid interrupt action data.');
@@ -178,14 +178,14 @@ export class BattlePersistence {
       }
     }
 
-    const participantCount = data.participants.length;
+    const participantCount = data['participants'].length;
     const validIndex = (index: unknown) =>
       Number.isInteger(index) && (index as number) >= 0 &&
       (index as number) < participantCount;
-    if (!Array.isArray(data.activeActorIndexes) ||
-        data.activeActorIndexes.some(index => !validIndex(index)) ||
-        new Set(data.activeActorIndexes).size !== data.activeActorIndexes.length ||
-        !(data.selectedActorIndex === null || validIndex(data.selectedActorIndex))) {
+    if (!Array.isArray(data['activeActorIndexes']) ||
+        data['activeActorIndexes'].some(index => !validIndex(index)) ||
+        new Set(data['activeActorIndexes']).size !== data['activeActorIndexes'].length ||
+        !(data['selectedActorIndex'] === null || validIndex(data['selectedActorIndex']))) {
       throw new Error('Invalid active or selected participant.');
     }
     return data as unknown as BattleSnapshot;
