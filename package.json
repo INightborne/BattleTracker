@@ -4,7 +4,7 @@
   "license": "MIT",
   "angular-cli": {},
   "scripts": {
-    "prebuild": "git describe --tags --always > src/assets/version.txt",
+    "prebuild": "node scripts/write-version.mjs",
     "build": "ng build",
     "start": "npm run prebuild && ng serve",
     "prod": "ng serve --configuration=production",

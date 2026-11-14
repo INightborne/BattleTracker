@@ -22,6 +22,10 @@ npm install
 npm start
 ```
 
-To build: `npm run build`. GitHub Actions builds and publishes the site to the \`gh-pages\` branch. In **Settings → Pages**, select **Deploy from a branch**, choose **gh-pages** and **/(root)**, and save. The site address is https://inightborne.github.io/BattleTracker/ once Pages is enabled.
+To build: `npm run build`. GitHub Actions builds and publishes the site to the `gh-pages` branch. In **Settings → Pages**, select **Deploy from a branch**, choose **gh-pages** and **/(root)**, and save. The site address is https://inightborne.github.io/BattleTracker/ once Pages is enabled.
 
 This copy uses the original SVG logo and vector graphics as favicon/app icons, rather than the original binary PNG/ICO icon files.
+
+## Vercel
+
+The root `vercel.json` configures a static Angular build at `dist/browser`, with a fallback to `index.html` for client routes. Vercel builds the `main` branch on each push; no database, server, cookies, or API keys are needed. Save data remains in localStorage for each browser, and JSON backups allow transferring encounters between devices.
